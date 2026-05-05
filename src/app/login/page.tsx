@@ -1,138 +1,173 @@
-// src/app/login/page.tsx
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const supabase     = createClient()
-  const searchParams = useSearchParams()
-  const redirectTo   = searchParams.get('redirectTo') ?? '/predict'
+  const supabase = createClient()
+  const router   = useRouter()
 
-  const [email,   setEmail]   = useState('')
-  const [name,    setName]    = useState('')
-  const [step,    setStep]    = useState<'form' | 'sent'>('form')
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+  const [tab,      setTab]      = useState<'login' | 'signup'>('login')
+  const [name,     setName]     = useState('')
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState('')
 
-  async function signIn(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) { setError('Email is required'); return }
-    if (!name.trim())  { setError('Your name is required'); return }
+  async function handleSignup() {
+    if (!name.trim())  { setError('Please enter your name'); return }
+    if (!email.trim()) { setError('Please enter your email'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
+      password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
-        data: { display_name: name.trim() },
-      },
+        data: { display_name: name.trim() }
+      }
     })
 
     setLoading(false)
-    if (error) {
-      setError(error.message)
-    } else {
-      setStep('sent')
-    }
+    if (error) { setError(error.message); return }
+    router.push('/predict')
+    router.refresh()
+  }
+
+  async function handleLogin() {
+    if (!email.trim()) { setError('Please enter your email'); return }
+    if (!password)     { setError('Please enter your password'); return }
+    setLoading(true)
+    setError('')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+
+    setLoading(false)
+    if (error) { setError(error.message); return }
+    router.push('/predict')
+    router.refresh()
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
       <div className="w-full max-w-sm">
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">⚽</div>
-          <h1 className="text-3xl font-bold tracking-widest text-brand-gold-l"
-              style={{ fontFamily: 'var(--font-bebas, sans-serif)' }}>
+          <h1 className="text-4xl font-bold text-yellow-400 tracking-widest mb-1">
             WC 2026
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Office Prediction League</p>
+          <p className="text-gray-500 text-sm">Office Prediction League</p>
         </div>
 
-        {step === 'form' ? (
-          <div className="card p-6">
-            <h2 className="text-base font-semibold mb-1">Sign in</h2>
-            <p className="text-xs text-gray-500 mb-5">
-              Enter your work email and name. We'll send you a magic link — no password needed.
-            </p>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
 
-            <form onSubmit={signIn} className="flex flex-col gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
-                  Your name
-                </label>
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="e.g. Sarah A."
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  maxLength={30}
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
-                  Work email
-                </label>
-                <input
-                  className="input"
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                />
-              </div>
-
-              {error && (
-                <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-gold w-full py-2.5 mt-1"
-              >
-                {loading ? 'Sending…' : 'Send magic link →'}
-              </button>
-            </form>
-
-            <p className="text-[11px] text-gray-600 text-center mt-4">
-              By signing in you agree to keep it friendly. 🤝
-            </p>
+          {/* Tabs */}
+          <div className="flex mb-5 bg-neutral-800 rounded-lg p-1">
+            <button
+              onClick={() => { setTab('login'); setError('') }}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                tab === 'login'
+                  ? 'bg-yellow-600 text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Sign in
+            </button>
+            <button
+              onClick={() => { setTab('signup'); setError('') }}
+              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                tab === 'signup'
+                  ? 'bg-yellow-600 text-black'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Sign up
+            </button>
           </div>
-        ) : (
-          <div className="card p-6 text-center">
-            <div className="text-4xl mb-4">📬</div>
-            <h2 className="text-lg font-semibold mb-2">Check your email</h2>
-            <p className="text-sm text-gray-400 mb-4">
-              We sent a magic link to <strong className="text-white">{email}</strong>.
-              Click the link to sign in — it expires in 1 hour.
-            </p>
-            <p className="text-xs text-gray-600">
-              Didn't get it?{' '}
+
+          {/* Name field (signup only) */}
+          {tab === 'signup' && (
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                Your name
+              </label>
+              <input
+                className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
+                type="text"
+                placeholder="e.g. Sarah A."
+                value={name}
+                onChange={e => setName(e.target.value)}
+                maxLength={30}
+              />
+            </div>
+          )}
+
+          {/* Email */}
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+              Email
+            </label>
+            <input
+              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
+              type="email"
+              placeholder="you@company.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
+            />
+          </div>
+
+          {/* Password */}
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+              Password
+            </label>
+            <input
+              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
+              type="password"
+              placeholder={tab === 'signup' ? 'At least 6 characters' : 'Your password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-4 px-3 py-2 bg-red-950 border border-red-900 rounded-lg text-red-400 text-xs">
+              {error}
+            </div>
+          )}
+
+          {/* Submit */}
+          <button
+            onClick={tab === 'login' ? handleLogin : handleSignup}
+            disabled={loading}
+            className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-500 text-black font-bold rounded-lg transition-all disabled:opacity-50 text-sm"
+          >
+            {loading
+              ? 'Please wait…'
+              : tab === 'login' ? 'Sign in →' : 'Create account →'
+            }
+          </button>
+
+          {tab === 'login' && (
+            <p className="text-center text-xs text-gray-600 mt-4">
+              No account?{' '}
               <button
-                onClick={() => setStep('form')}
-                className="text-brand-gold-l underline underline-offset-2"
+                onClick={() => { setTab('signup'); setError('') }}
+                className="text-yellow-500 underline underline-offset-2"
               >
-                Try again
+                Sign up here
               </button>
             </p>
-          </div>
-        )}
-
-        <p className="text-center text-xs text-gray-600 mt-5">
-          <Link href="/rules" className="hover:text-gray-400 transition-colors">
-            View scoring rules →
-          </Link>
-        </p>
+          )}
+        </div>
       </div>
     </div>
   )
