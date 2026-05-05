@@ -1,5 +1,4 @@
 // src/lib/supabase/server.ts
-// Used in Server Components and API Routes
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -11,12 +10,12 @@ export async function createClient() {
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options as any)
             )
-          } catch { /* Server Component — ignore */ }
+          } catch {}
         },
       },
     }
@@ -31,10 +30,10 @@ export async function createAdminClient() {
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options as any)
             )
           } catch {}
         },
