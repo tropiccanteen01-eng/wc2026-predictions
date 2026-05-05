@@ -1,173 +1,116 @@
 'use client'
+// src/app/login/page.tsx
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const supabase = createClient()
-  const router   = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [tab,      setTab]      = useState<'login' | 'signup'>('login')
-  const [name,     setName]     = useState('')
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
-
-  async function handleSignup() {
-    if (!name.trim())  { setError('Please enter your name'); return }
-    if (!email.trim()) { setError('Please enter your email'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !email.trim()) return
     setLoading(true)
-    setError('')
+    setError(null)
 
-    const { error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email,
       options: {
-        data: { display_name: name.trim() }
-      }
+        data: { display_name: name.trim() },
+        emailRedirectTo: `${location.origin}/auth/callback`,
+      },
     })
 
     setLoading(false)
-    if (error) { setError(error.message); return }
-    router.push('/predict')
-    router.refresh()
-  }
-
-  async function handleLogin() {
-    if (!email.trim()) { setError('Please enter your email'); return }
-    if (!password)     { setError('Please enter your password'); return }
-    setLoading(true)
-    setError('')
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    })
-
-    setLoading(false)
-    if (error) { setError(error.message); return }
-    router.push('/predict')
-    router.refresh()
+    if (err) { setError(err.message); return }
+    setSent(true)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-[#0a0f1e] flex flex-col items-center justify-center px-4">
+      {/* Background glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#f0b429]/[0.06] rounded-full blur-[100px]" />
+      </div>
 
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">⚽</div>
-          <h1 className="text-4xl font-bold text-yellow-400 tracking-widest mb-1">
-            WC 2026
+      <div className="relative w-full max-w-sm">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="text-6xl mb-4">🌍</div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            WC <span className="text-[#f0b429]">2026</span>
           </h1>
-          <p className="text-gray-500 text-sm">Office Prediction League</p>
+          <p className="text-white/50 mt-2 text-sm">Prediction Game</p>
         </div>
 
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-
-          {/* Tabs */}
-          <div className="flex mb-5 bg-neutral-800 rounded-lg p-1">
+        {sent ? (
+          <div className="card p-8 text-center">
+            <div className="text-4xl mb-4">📬</div>
+            <h2 className="text-white font-semibold text-lg mb-2">Check your email</h2>
+            <p className="text-white/50 text-sm">
+              We sent a magic link to <span className="text-white/80">{email}</span>.
+              Click it to sign in — no password needed.
+            </p>
             <button
-              onClick={() => { setTab('login'); setError('') }}
-              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                tab === 'login'
-                  ? 'bg-yellow-600 text-black'
-                  : 'text-gray-400 hover:text-white'
-              }`}
+              onClick={() => setSent(false)}
+              className="mt-6 btn-ghost text-sm"
             >
-              Sign in
-            </button>
-            <button
-              onClick={() => { setTab('signup'); setError('') }}
-              className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
-                tab === 'signup'
-                  ? 'bg-yellow-600 text-black'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Sign up
+              Use a different email
             </button>
           </div>
-
-          {/* Name field (signup only) */}
-          {tab === 'signup' && (
-            <div className="mb-3">
-              <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
-                Your name
+        ) : (
+          <form onSubmit={handleSubmit} className="card p-8 space-y-5">
+            <div>
+              <label className="block text-xs text-white/50 font-medium mb-2 uppercase tracking-wider">
+                Your Name
               </label>
               <input
-                className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
                 type="text"
-                placeholder="e.g. Sarah A."
                 value={name}
                 onChange={e => setName(e.target.value)}
-                maxLength={30}
+                placeholder="e.g. Marco Rossi"
+                required
+                className="w-full bg-[#1a2234] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#f0b429] transition-colors"
               />
             </div>
-          )}
 
-          {/* Email */}
-          <div className="mb-3">
-            <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
-              Email
-            </label>
-            <input
-              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
-              type="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
-            />
-          </div>
-
-          {/* Password */}
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
-              Password
-            </label>
-            <input
-              className="w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none focus:border-yellow-600"
-              type="password"
-              placeholder={tab === 'signup' ? 'At least 6 characters' : 'Your password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
-            />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="mb-4 px-3 py-2 bg-red-950 border border-red-900 rounded-lg text-red-400 text-xs">
-              {error}
+            <div>
+              <label className="block text-xs text-white/50 font-medium mb-2 uppercase tracking-wider">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="w-full bg-[#1a2234] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:border-[#f0b429] transition-colors"
+              />
             </div>
-          )}
 
-          {/* Submit */}
-          <button
-            onClick={tab === 'login' ? handleLogin : handleSignup}
-            disabled={loading}
-            className="w-full py-2.5 bg-yellow-600 hover:bg-yellow-500 text-black font-bold rounded-lg transition-all disabled:opacity-50 text-sm"
-          >
-            {loading
-              ? 'Please wait…'
-              : tab === 'login' ? 'Sign in →' : 'Create account →'
-            }
-          </button>
+            {error && (
+              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
 
-          {tab === 'login' && (
-            <p className="text-center text-xs text-gray-600 mt-4">
-              No account?{' '}
-              <button
-                onClick={() => { setTab('signup'); setError('') }}
-                className="text-yellow-500 underline underline-offset-2"
-              >
-                Sign up here
-              </button>
+            <button
+              type="submit"
+              disabled={loading || !name.trim() || !email.trim()}
+              className="btn-gold w-full"
+            >
+              {loading ? 'Sending…' : 'Send Magic Link ✨'}
+            </button>
+
+            <p className="text-center text-white/30 text-xs">
+              No account needed · No password · One click to enter
             </p>
-          )}
-        </div>
+          </form>
+        )}
       </div>
     </div>
   )

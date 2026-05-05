@@ -1,101 +1,97 @@
-// src/components/layout/Navbar.tsx
 'use client'
+// src/components/layout/Navbar.tsx
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
-import type { Profile } from '@/types/database'
+import type { Profile } from '@/types'
 
-const NAV = [
-  { href: '/predict',      label: 'Predict'      },
-  { href: '/leaderboard',  label: 'Leaderboard'  },
-  { href: '/dashboard',    label: 'My Stats'      },
-  { href: '/rules',        label: 'Rules'         },
-]
-
-interface NavbarProps {
-  user: User | null
-  profile: Pick<Profile, 'display_name' | 'is_admin'> | null
-}
-
-export function Navbar({ user, profile }: NavbarProps) {
+export function Navbar() {
   const pathname = usePathname()
-  const router   = useRouter()
+  const router = useRouter()
   const supabase = createClient()
+  const [profile, setProfile] = useState<Profile | null>(null)
 
-  async function signOut() {
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      setProfile(data)
+    })
+  }, [])
+
+  const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
   }
 
+  const navLinks = [
+    { href: '/predict',     label: '⚽ Predict'     },
+    { href: '/leaderboard', label: '🏆 Leaderboard' },
+    { href: '/dashboard',   label: '📊 Dashboard'   },
+    { href: '/rules',       label: '📋 Rules'        },
+  ]
+
+  if (pathname === '/login') return null
+
   return (
-    <nav className="sticky top-0 z-50 bg-surface-1 border-b border-white/8">
-      <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0a0f1e]/90 backdrop-blur-md border-b border-white/[0.08] flex items-center px-4 md:px-6 gap-4">
+      {/* Logo */}
+      <Link href="/predict" className="flex items-center gap-2 mr-4 flex-shrink-0">
+        <span className="text-xl">🌍</span>
+        <span className="font-bold text-white text-sm hidden sm:block tracking-tight">
+          WC<span className="text-[#f0b429]">2026</span>
+        </span>
+      </Link>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-2xl">⚽</span>
-          <span className="text-xl font-bold tracking-widest text-brand-gold-l hidden sm:block"
-                style={{ fontFamily: 'var(--font-bebas, sans-serif)' }}>
-            WC 2026
-          </span>
-        </Link>
-
-        {/* Nav links — only when logged in */}
-        {user && (
-          <div className="flex items-center gap-0.5 ml-3 overflow-x-auto scrollbar-none">
-            {NAV.map(n => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={[
-                  'px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors',
-                  pathname.startsWith(n.href)
-                    ? 'bg-brand-gold/15 text-brand-gold-l'
-                    : 'text-gray-500 hover:text-gray-300'
-                ].join(' ')}
-              >
-                {n.label}
-              </Link>
-            ))}
-            {profile?.is_admin && (
-              <Link
-                href="/admin"
-                className={[
-                  'px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors',
-                  pathname.startsWith('/admin')
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'text-red-500/60 hover:text-red-400'
-                ].join(' ')}
-              >
-                ⚑ Admin
-              </Link>
-            )}
-          </div>
+      {/* Nav links */}
+      <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-hide">
+        {navLinks.map(({ href, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex-shrink-0 text-xs md:text-sm font-medium px-3 py-2 rounded-lg transition-all duration-150 ${
+              pathname.startsWith(href)
+                ? 'bg-[#f0b429]/15 text-[#f0b429]'
+                : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
+        {profile?.is_admin && (
+          <Link
+            href="/admin"
+            className={`flex-shrink-0 text-xs md:text-sm font-medium px-3 py-2 rounded-lg transition-all duration-150 ${
+              pathname.startsWith('/admin')
+                ? 'bg-purple-500/20 text-purple-300'
+                : 'text-purple-400/60 hover:text-purple-300 hover:bg-purple-500/10'
+            }`}
+          >
+            🛠 Admin
+          </Link>
         )}
-
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {user ? (
-            <>
-              <span className="text-xs text-gray-500 hidden sm:block max-w-[120px] truncate">
-                {profile?.display_name ?? user.email}
-              </span>
-              {profile?.is_admin && (
-                <span className="badge-red text-[9px] px-1.5 hidden sm:block">ADMIN</span>
-              )}
-              <button onClick={signOut} className="btn-ghost text-xs px-3 py-1.5">
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link href="/login" className="btn-gold text-xs px-4 py-1.5">
-              Sign in
-            </Link>
-          )}
-        </div>
       </div>
+
+      {/* User */}
+      {profile && (
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <span className="text-xs text-white/50 hidden md:block max-w-[120px] truncate">
+            {profile.display_name}
+          </span>
+          <button
+            onClick={handleSignOut}
+            className="text-xs text-white/40 hover:text-white/70 transition-colors px-2 py-1 rounded"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
     </nav>
   )
 }

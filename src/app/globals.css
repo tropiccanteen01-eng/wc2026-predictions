@@ -1,45 +1,92 @@
+/* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; }
-  body {
-    background-color: #0D1117;
-    color: #E6EDF3;
-    -webkit-font-smoothing: antialiased;
+  :root {
+    --wc-bg:          #0a0f1e;
+    --wc-bg-card:     #111827;
+    --wc-bg-surface:  #1a2234;
+    --wc-text:        #f0f4ff;
+    --wc-text-muted:  #8899bb;
+    --wc-text-hint:   #4a5a7a;
+    --wc-border:      rgba(255,255,255,0.08);
+    --wc-gold:        #f0b429;
+    --wc-gold-dark:   #c48a00;
+    --wc-gold-glow:   rgba(240,180,41,0.25);
+    --wc-green:       #22c55e;
+    --wc-red:         #ef4444;
+    --wc-blue:        #3b82f6;
   }
-  input[type='number'] { -moz-appearance: textfield; }
-  input[type='number']::-webkit-outer-spin-button,
-  input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
 @layer components {
-  .card { @apply bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden; }
-  .card-row { @apply flex items-center gap-3 px-4 py-3 border-b border-neutral-800 last:border-0; }
-  .btn { @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn-gold { @apply btn bg-yellow-600 text-black hover:bg-yellow-500; }
-  .btn-ghost { @apply btn bg-transparent border border-neutral-700 text-gray-400 hover:bg-neutral-800 hover:text-white; }
-  .btn-danger { @apply btn bg-red-900 text-red-400 border border-red-800 hover:bg-red-800; }
-  .btn-success { @apply btn bg-green-900 text-green-400 border border-green-800 hover:bg-green-800; }
-  .input { @apply w-full px-3 py-2.5 bg-neutral-800 border border-neutral-700 rounded-lg text-white text-sm outline-none transition-colors focus:border-yellow-600 placeholder-gray-600; }
-  .score-input { @apply w-12 h-12 text-center text-2xl font-bold bg-neutral-800 border border-neutral-700 rounded-lg outline-none transition-all focus:border-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed; }
-  .badge { @apply inline-block text-xs font-bold px-2 py-0.5 rounded-full; }
-  .badge-gold { @apply badge bg-yellow-900 text-yellow-400; }
-  .badge-green { @apply badge bg-green-900 text-green-400; }
-  .badge-red { @apply badge bg-red-900 text-red-400; }
-  .badge-blue { @apply badge bg-blue-900 text-blue-400; }
-  .badge-gray { @apply badge bg-neutral-800 text-gray-400; }
-  .pts-exact { @apply badge bg-yellow-900 text-yellow-400; }
-  .pts-correct { @apply badge bg-green-900 text-green-400; }
-  .pts-wrong { @apply badge bg-neutral-800 text-gray-500; }
-  .pts-pending { @apply badge bg-blue-900 text-blue-400; }
-  .section-title { @apply text-2xl font-bold tracking-wide text-yellow-400 mb-3; }
-  .stage-tabs { @apply flex overflow-x-auto bg-neutral-900 border-b border-neutral-800 mb-5; scrollbar-width: none; }
-  .stage-tab { @apply flex-shrink-0 px-4 py-3 text-xs font-semibold text-gray-500 border-b-2 border-transparent transition-all whitespace-nowrap hover:text-gray-300 cursor-pointer bg-transparent; }
-  .progress-bar-track { @apply flex-1 h-1.5 bg-neutral-700 rounded-full overflow-hidden; }
-  .progress-bar-fill { @apply h-full bg-yellow-600 rounded-full transition-all duration-500; }
-  .toast { @apply fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-2xl text-sm font-semibold z-50 whitespace-nowrap shadow-lg bg-neutral-800 border border-neutral-700 text-white; }
-  .toast-ok { @apply toast border-green-800; }
-  .toast-err { @apply toast border-red-800 text-red-300; }
+  /* Cards */
+  .card {
+    @apply bg-[#111827] border border-white/[0.08] rounded-2xl;
+  }
+  .card-glass {
+    @apply bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] rounded-2xl;
+  }
+
+  /* Buttons */
+  .btn-gold {
+    @apply bg-[#f0b429] text-[#0a0f1e] font-semibold px-6 py-3 rounded-xl
+           hover:bg-[#f5c84a] active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  .btn-outline {
+    @apply border border-white/20 text-white/80 font-medium px-6 py-3 rounded-xl
+           hover:border-white/40 hover:text-white active:scale-95 transition-all duration-150;
+  }
+  .btn-ghost {
+    @apply text-white/60 font-medium px-4 py-2 rounded-lg
+           hover:text-white hover:bg-white/[0.06] transition-all duration-150;
+  }
+
+  /* Score inputs */
+  .score-input {
+    @apply w-14 h-14 text-center text-2xl font-bold bg-[#1a2234] border-2 border-white/10
+           rounded-xl text-white focus:outline-none focus:border-[#f0b429]
+           transition-colors duration-150 [appearance:textfield]
+           [&::-webkit-outer-spin-button]:appearance-none
+           [&::-webkit-inner-spin-button]:appearance-none;
+  }
+  .score-input:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  /* Deadline banner */
+  .deadline-banner-open {
+    @apply bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl px-4 py-3;
+  }
+  .deadline-banner-locked {
+    @apply bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3;
+  }
+
+  /* Points chips */
+  .chip-5pts {
+    @apply bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+  .chip-2pts {
+    @apply bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+  .chip-0pts {
+    @apply bg-red-500/10 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+  .chip-pending {
+    @apply bg-white/[0.06] text-white/40 text-xs font-medium px-2 py-0.5 rounded-full;
+  }
+
+  /* Rank badge */
+  .rank-1 { @apply bg-yellow-500 text-black; }
+  .rank-2 { @apply bg-gray-300 text-black; }
+  .rank-3 { @apply bg-amber-600 text-white; }
+  .rank-other { @apply bg-white/[0.08] text-white/60; }
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }

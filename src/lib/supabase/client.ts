@@ -1,11 +1,9 @@
 // src/lib/supabase/client.ts
-// Browser-side Supabase client — safe to use in Client Components.
-
+// Used in Client Components
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/database'
 
 export function createClient() {
-  return createBrowserClient<Database>(
+  return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
